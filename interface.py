@@ -12,7 +12,7 @@ def main():
     # todo: заменить чем-то нормальным
     test = {'orders': [{'weight': '234', 'region': 'ural'},
                        {'weight': '234', 'region': 'ural'},
-                       {'weight': '234',     'region': 'ural'}]}
+                       {'weight': '234', 'region': 'ural'}]}
 
     return render_template('main.html', orders=test, user=user)
 
@@ -30,15 +30,13 @@ def sign_up():
 @app.route('/profile')
 def profile():
     if user:
-        return render_template('profile.html')
+        return render_template('profile.html', user=user)
     return render_template('sign_in.html')
 
 
 @app.route('/order')
 def order():
-    if user:
-        return render_template('order.html')
-    return render_template('sign_in.html')
+    return render_template('order.html', user=user)
 
 
 if __name__ == '__main__':
