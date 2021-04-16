@@ -4,7 +4,7 @@ from data.couriers import Courier
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, ValidationError
 from wtforms.validators import DataRequired
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -27,6 +27,17 @@ user = False
 test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00', '14:00-15:00']},
         {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
         {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
+
+
+class CheckWeight(object):
+    def __init__(self):
+        self.message = "Массу заказа необхимо указать числом"
+
+    def __call__(self, form, field):
+        try:
+            weight = float(field.data)
+        except ValueError:
+            raise ValidationError(self.message)
 
 
 class MainForm(FlaskForm):
@@ -52,6 +63,16 @@ class SigninForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     submit = SubmitField('Войти')
+
+
+class MakeOrderForm(FlaskForm):
+    weight = StringField('Вес', validators=[DataRequired(), CheckWeight()])
+    region = SelectField('Район доставки    ',
+                         choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
+                         coerce=int)
+    start_delivery_hour = SelectField('Начало', choices=[str(hour) for hour in range(1, 25)], coerce=int)
+    finish_delivery_hour = SelectField('Конец', choices=[str(hour) for hour in range(1, 25)], coerce=int)
+    submit = SubmitField('Сделать заказ')
 
 
 def main():
@@ -98,9 +119,16 @@ def main():
             return render_template('profile.html', user=user, orders=test, regions=REGIONS)
         return redirect('/sign_in')
 
-    @app.route('/order')
+    @app.route('/order', methods=['GET', 'POST'])
     def order():
-        return render_template('order.html', user=user)
+        form = MakeOrderForm()
+        if request.method == "POST":
+            if form.validate_on_submit():
+                # работа с базой
+                return redirect('/main')
+            return render_template('order.html', user=user, form=form)
+        elif request.method == "GET":
+            return render_template('order.html', user=user, form=form)
 
     @app.route('/change_profile', methods=['GET', 'POST'])
     def change_profile():
