@@ -23,6 +23,11 @@ class LoginForm(FlaskForm):
     finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     submit = SubmitField('Зарегистрироваться')
 
+class SigninForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired()])
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    submit = SubmitField('Войти')
+
 
 def main():
     db_session.global_init("couriers")
@@ -45,7 +50,10 @@ def main():
 
     @app.route('/sign_in')
     def sign_in():
-        return render_template('sign_in.html', user=user)
+        form = SigninForm()
+        if form.validate_on_submit():
+            return redirect('/profile')
+        return render_template('sign_in.html', user=user, form=form)
 
     @app.route('/sign_up', methods=['GET', 'POST'])
     def sign_up():
