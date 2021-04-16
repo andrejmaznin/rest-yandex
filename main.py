@@ -2,7 +2,7 @@ from flask import Flask
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from flask_restful import reqparse, abort, Api, Resource
-from flask import render_template
+from flask import render_template, redirect
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired
@@ -47,9 +47,11 @@ def main():
     def sign_in():
         return render_template('sign_in.html', user=user)
 
-    @app.route('/sign_up')
+    @app.route('/sign_up', methods=['GET', 'POST'])
     def sign_up():
         form = LoginForm()
+        if form.validate_on_submit():
+            return redirect('/profile')
         return render_template('sign_up.html', user=user, form=form)
 
     @app.route('/profile')
