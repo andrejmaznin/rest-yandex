@@ -12,12 +12,17 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
 user = False
+REGIONS = {'1': 'Левобережный район', '2': 'Правобережный', '3': 'Орджоникидзовский'}
+test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00']},
+        {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
+        {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
 
 
 class LoginForm(FlaskForm):
     username = StringField('ФИО', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
-    region = StringField('Регион', validators=[DataRequired()])
+    region = SelectField('Район', choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
+                         coerce=int)
     type = SelectField('Способ передвижения', choices=[(1, 'Пешком'), (2, 'Велосипед'), (3, 'Автомобиль')], coerce=int)
     start_hour = SelectField('Начало рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
@@ -40,14 +45,8 @@ def main():
 
     @app.route('/')
     @app.route('/main')
-    def main():
-        # словарик для теста формы
-        # todo: заменить чем-то нормальным
-        test = {'orders': [{'weight': '234', 'region': 'ural'},
-                           {'weight': '234', 'region': 'ural'},
-                           {'weight': '234', 'region': 'ural'}]}
-
-        return render_template('main.html', orders=test, user=user)
+    def main_page():
+        return render_template('main.html', orders=test, user=user, regions=REGIONS)
 
     @app.route('/sign_in')
     def sign_in():
@@ -70,11 +69,19 @@ def main():
     def profile():
         if user:
             return render_template('profile.html', user=user)
-        return render_template('sign_in.html')
+        return render_template('sign_in.html', orders=test, user=user, regions=REGIONS)
 
     @app.route('/order')
     def order():
         return render_template('order.html', user=user)
+
+    # @app.route('/change_profile', methods=['GET', 'PATCH'])
+    # def change_profile():
+    #     form = SigninForm()
+    #     if
+    #     if form.validate_on_submit():
+    #         return redirect('/profile')
+    #     return render_template('sign_in.html', user=user, form=form)
 
     app.run()
 
