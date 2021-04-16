@@ -1,1 +1,67 @@
 {% extends "base.html" %}
+
+{% block content %}
+<h1>Мой профиль</h1>
+<div class="'">
+    <h2>{{user.name}}</h2>
+    <table class="table table-borderless">
+        <tbody>
+        <tr>
+            <td style="color: black">Регион:</td>
+            <!--            <td style="color: grey">Иван Иванов</td>-->
+            <td style="color: dark grey">{{user.region}}</td>
+        </tr>
+        <tr>
+            <td style="color: black">Способ передвижения</td>
+            <!--            <td style="color: grey">Пешком</td>-->
+            <td style="color: dark grey">{{user.courier_type}}</td>
+        </tr>
+        </tbody>
+    </table>
+    <a href="/change_profile" class="btn btn-secondary btn-fluid">Редактировать</a>
+</div>
+<div>
+    <h3>Заказы в процессе</h3>
+    <table class="table table-warning table-hover">
+        <thead>
+        <td>#</td>
+        <td>Вес</td>
+        <td>Реион доставки</td>
+        <td>Возможные часы доставки</td>
+        </thead>
+        <tbody>
+        {% for item in orders %}
+            {% if item.completed == False %}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    <td>{{item.weight}}</td>
+                    <td>{{region[item.region]}}</td>
+                    <td>{% for el in item.delivery_hours %}{{el}},<br>{% endfor %}</td>
+<!--                    <td><button method="post" class="btn btn-info">Закончить заказ</button></td>-->
+                 </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <h3>Выполненные заказы</h3>
+    <table class="table table-success table-striped">
+        <thead>
+            <td>#</td>
+            <td>Вес</td>
+            <td>Район доставки</td>
+        </thead>
+        <tbody>
+            {% for item in orders %}
+                {% if item.completed == True%}
+                    <tr>
+                        <td>{{loop.index}}</td>
+                        <td>{{item.weight}}</td>
+                        <td>{{region[item.region]}}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

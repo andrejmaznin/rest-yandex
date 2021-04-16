@@ -11,16 +11,18 @@
 <table class="table table-hover">
     <theader>
         <td>Вес заказа</td>
-        <td>Регион доставки</td>
+        <td>Район доставки</td>
+        <td>Возможные часы доставки</td>
     </theader>
     <tbody>
-    {% for item in orders['orders'] %}
+    {% for item in orders %}
     <tr>
-        <td>{{item["weight"]}}</td>
-        <td>{{item["region"]}}</td>
+        <td>{{item.weight}}</td>
+        <td>{{regions[item.region]}}</td>
+        <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
         {% if user %}
         <td>
-            <button class="btn btn-alert">Взять заказ</button>
+            <button class="btn btn-secondary">Взять заказ</button>
         </td>
         {% endif %}
     </tr>
