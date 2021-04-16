@@ -6,6 +6,14 @@ from flask import render_template, redirect
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+def set_password(password):
+    return generate_password_hash(password)
+
+
+types = {1: "foot", 2: "bike", 3: "car"}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -59,6 +67,13 @@ def main():
     def sign_up():
         form = LoginForm()
         if request.method == "POST":
+            session = db_session.create_session()
+            courier = Courier(courier_type=form.type.data, regions=[form.region.data],
+                              working_hours=f"{form.start_hour.data}:00-{form.finish_hour.data}:00",
+                              hashed_password=set_password(form.password.data), login=form.username.data)
+
+            session.add(courier)
+            session.commit()
             print(form.username.data)
             if form.validate_on_submit():
                 return redirect('/profile')
