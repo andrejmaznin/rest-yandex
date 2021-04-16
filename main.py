@@ -75,16 +75,17 @@ def main():
             session.add(courier)
             session.commit()
             print(form.username.data)
-            if form.validate_on_submit():
-                return redirect('/profile')
-        elif request.method == "GET":
+        if form.validate_on_submit():
+            print(form.username.data)
+            return redirect('/profile')
+        if request.method == "GET":
             return render_template('sign_up.html', user=user, form=form)
 
-    @app.route('/profile')
+    @app.route('/profile', methods=['GET', 'POST'])
     def profile():
         if user:
-            return render_template('profile.html', user=user)
-        return render_template('sign_in.html', orders=test, user=user, regions=REGIONS)
+            return render_template('profile.html', user=user, orders=test, regions=REGIONS)
+        return redirect('/sign_in')
 
     @app.route('/order')
     def order():
