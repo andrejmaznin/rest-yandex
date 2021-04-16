@@ -19,7 +19,7 @@
         </tbody>
     </table>
     <a href="/change_profile" class="btn btn-secondary btn-fluid">Редактировать</a>
-</div>
+</div><br>
 <div>
     <h3>Заказы в процессе</h3>
     <table class="table table-warning table-hover">
@@ -28,6 +28,7 @@
         <td>Вес</td>
         <td>Реион доставки</td>
         <td>Возможные часы доставки</td>
+        <td></td>
         </thead>
         <tbody>
         {% for item in orders %}
@@ -36,14 +37,15 @@
                     <td>{{loop.index}}</td>
                     <td>{{item.weight}}</td>
                     <td>{{regions[item.region]}}</td>
-                    <td>{% for el in item.delivery_hours %}{{el}},<br>{% endfor %}</td>
-<!--                    <td><button method="post" class="btn btn-info">Закончить заказ</button></td>-->
+                    <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
+                    <td><button method="post" class="btn btn-info">Закончить заказ</button></td>
                  </tr>
             {% endif %}
         {% endfor %}
         </tbody>
     </table>
-    <br>
+    <button class="col-lg-12 btn-warning    ">Назначить новые заказы</button>
+    <br><br>
     <h3>Выполненные заказы</h3>
     <table class="table table-success table-striped">
         <thead>

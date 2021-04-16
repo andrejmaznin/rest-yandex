@@ -19,14 +19,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
-user = False
 REGIONS = {'1': 'Левобережный район', '2': 'Правобережный', '3': 'Орджоникидзовский'}
-test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00']},
+
+# тестовые данные
+user = False
+# user = {'username': 'Иван Иванов', 'regions': [1], 'hashed_password': '*как бы хэш*', 'working_hours': ['11:00-13:00']}
+test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00', '14:00-15:00']},
         {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
         {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
 
 
-class LoginForm(FlaskForm):
+class MainForm(FlaskForm):
     username = StringField('ФИО', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     region = SelectField('Район', choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
@@ -35,6 +38,14 @@ class LoginForm(FlaskForm):
     start_hour = SelectField('Начало рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     submit = SubmitField('Зарегистрироваться')
+
+
+class LoginForm(MainForm):
+    submit = SubmitField('Зарегистрироваться')
+
+
+class ChangeForm(MainForm):
+    submit = SubmitField('Изменить')
 
 
 class SigninForm(FlaskForm):
@@ -67,18 +78,18 @@ def main():
     def sign_up():
         form = LoginForm()
         if request.method == "POST":
-            session = db_session.create_session()
-            courier = Courier(courier_type=form.type.data, regions=[form.region.data],
-                              working_hours=f"{form.start_hour.data}:00-{form.finish_hour.data}:00",
-                              hashed_password=set_password(form.password.data), login=form.username.data)
+            if form.validate_on_submit():
+                session = db_session.create_session()
+                courier = Courier(courier_type=form.type.data, regions=[form.region.data],
+                                  working_hours=f"{form.start_hour.data}:00-{form.finish_hour.data}:00",
+                                  hashed_password=set_password(form.password.data), login=form.username.data)
 
-            session.add(courier)
-            session.commit()
-            print(form.username.data)
-        if form.validate_on_submit():
-            print(form.username.data)
-            return redirect('/profile')
-        if request.method == "GET":
+                session.add(courier)
+                session.commit()
+                print(form.username.data)
+                return redirect('/profile')
+            return render_template('sign_up.html', user=user, form=form)
+        elif request.method == "GET":
             return render_template('sign_up.html', user=user, form=form)
 
     @app.route('/profile', methods=['GET', 'POST'])
@@ -91,13 +102,25 @@ def main():
     def order():
         return render_template('order.html', user=user)
 
-    # @app.route('/change_profile', methods=['GET', 'PATCH'])
-    # def change_profile():
-    #     form = SigninForm()
-    #     if
-    #     if form.validate_on_submit():
-    #         return redirect('/profile')
-    #     return render_template('sign_in.html', user=user, form=form)
+    @app.route('/change_profile', methods=['GET', 'POST'])
+    def change_profile():
+        if user:
+            form = ChangeForm()
+            # Подставление данных авторизованного пользователя в форму
+            form.username.data = user['username']
+            form.region.data = user['regions'][0]
+            form.start_hour.data, form.finish_hour.data = [int(el.split(':')[0]) for el in
+                                                           user['working_hours'][0].split('-')]
+
+            if request.method == "POST":
+                print(1)
+                if form.validate_on_submit():
+                    # работа с базой
+                    return redirect('/profile')
+                return render_template('change_profile.html', user=user, form=form)
+            elif request.method == "GET":
+                return render_template('change_profile.html', user=user, form=form)
+        return redirect('/sign_in')
 
     app.run()
 
