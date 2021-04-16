@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from flask_restful import reqparse, abort, Api, Resource
@@ -22,6 +22,7 @@ class LoginForm(FlaskForm):
     start_hour = SelectField('Начало рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     submit = SubmitField('Зарегистрироваться')
+
 
 class SigninForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
@@ -58,9 +59,12 @@ def main():
     @app.route('/sign_up', methods=['GET', 'POST'])
     def sign_up():
         form = LoginForm()
-        if form.validate_on_submit():
-            return redirect('/profile')
-        return render_template('sign_up.html', user=user, form=form)
+        if request.method == "POST":
+            print(form.username.data)
+            if form.validate_on_submit():
+                return redirect('/profile')
+        elif request.method == "GET":
+            return render_template('sign_up.html', user=user, form=form)
 
     @app.route('/profile')
     def profile():
