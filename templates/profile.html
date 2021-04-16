@@ -35,7 +35,7 @@
                 <tr>
                     <td>{{loop.index}}</td>
                     <td>{{item.weight}}</td>
-                    <td>{{region[item.region]}}</td>
+                    <td>{{regions[item.region]}}</td>
                     <td>{% for el in item.delivery_hours %}{{el}},<br>{% endfor %}</td>
 <!--                    <td><button method="post" class="btn btn-info">Закончить заказ</button></td>-->
                  </tr>
@@ -57,7 +57,7 @@
                     <tr>
                         <td>{{loop.index}}</td>
                         <td>{{item.weight}}</td>
-                        <td>{{region[item.region]}}</td>
+                        <td>{{regions[item.region]}}</td>
                     </tr>
                 {% endif %}
             {% endfor %}
