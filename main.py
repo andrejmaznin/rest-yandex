@@ -60,7 +60,7 @@ class ChangeForm(MainForm):
     submit = SubmitField('Изменить')
 
 
-class SigninForm(FlaskForm):
+class SignInForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     submit = SubmitField('Войти')
@@ -91,7 +91,7 @@ def main():
 
     @app.route('/sign_in', methods=['GET', 'POST'])
     def sign_in():
-        form = SigninForm()
+        form = SignInForm()
         session = db_session.create_session()
         if request.method == "POST":
             courier = session.query(Courier).filter(Courier.login == form.username.data,
@@ -113,6 +113,8 @@ def main():
         if request.method == "POST":
             if form.validate_on_submit():
                 session = db_session.create_session()
+                if session.query(Courier).filter(Courier.login == form.username.data).all():
+                    return redirect('/sign_in')
                 courier = Courier(courier_type=form.type.data, regions=[form.region.data],
                                   working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
                                   hashed_password=set_password(form.password.data), login=form.username.data)
