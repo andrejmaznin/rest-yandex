@@ -11,6 +11,8 @@ from datetime import datetime
 
 courier_types = {"foot": 10,
                  "bike": 15, "car": 50}
+courier_types2 = {1: "foot",
+                  2: "bike", 3: "car"}
 
 
 def abort_if_order_not_found(order_id):
@@ -84,7 +86,7 @@ class OrdersAssignResource(Resource):
 
         weight_courier = session.query(Order).filter_by(courier_id=req["courier_id"]).all()
         weight_courier = sum([i.as_dict()["weight"] for i in weight_courier])
-        free_weight = courier_types[courier["courier_type"]] - weight_courier
+        free_weight = courier_types[courier_types2[int(courier["courier_type"])]] - weight_courier
 
         courier_times = courier["working_hours"]
         orders = [i.as_dict() for i in
@@ -142,7 +144,7 @@ def assign(courier_id):
 
     weight_courier = session.query(Order).filter_by(courier_id=courier_id).all()
     weight_courier = sum([i.as_dict()["weight"] for i in weight_courier])
-    free_weight = courier_types[int(courier["courier_type"])] - weight_courier
+    free_weight = courier_types[courier_types2[int(courier["courier_type"])]] - weight_courier
 
     courier_times = courier["working_hours"]
     orders = [i.as_dict() for i in
