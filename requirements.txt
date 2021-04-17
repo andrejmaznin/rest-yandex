@@ -4,3 +4,4 @@ flask-wtf
 sqlalchemy
 psycopg2
 wtforms
+requests

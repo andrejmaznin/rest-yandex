@@ -37,7 +37,7 @@
                     <td>{{item.weight}}</td>
                     <td>{{regions[item.region]}}</td>
                     <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
-                    <td><a class="btn btn-info" href="/order_complete/{{item.order_id}}">Закончить заказ</a></td>
+                    <td><a class="btn btn-info" href="/order_complete/{{item.order_id}}/{{user.courier_id}}">Закончить заказ</a></td>
                  </tr>
             {% endif %}
         {% endfor %}
