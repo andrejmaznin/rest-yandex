@@ -128,3 +128,34 @@ class OrdersCompleteResource(Resource):
         response.status_code = 200
         session.commit()
         return response
+
+
+def complete(order_id):
+    session = db_session.create_session()
+    session.query(Order).filter_by(order_id=order_id).update({"completed": True, "courier_id": None})
+    session.commit()
+
+
+def assign(courier_id):
+    session = db_session.create_session()
+    courier = session.query(Courier).get(courier_id).as_dict()
+
+    weight_courier = session.query(Order).filter_by(courier_id=courier_id).all()
+    weight_courier = sum([i.as_dict()["weight"] for i in weight_courier])
+    free_weight = courier_types[courier["courier_type"]] - weight_courier
+
+    courier_times = courier["working_hours"]
+    orders = [i.as_dict() for i in
+              session.query(Order).filter(and_(Order.courier_id == None, Order.completed == False)).all()]
+    orders = list(filter(lambda a: check_regions(courier["regions"], a["region"]) and
+                                   check_intersection(courier_times, a["delivery_hours"]), orders))
+    print(orders)
+    ids = []
+    for i in orders:
+        if free_weight >= i["weight"]:
+            free_weight -= i["weight"]
+            new_order = i
+            new_order["courier_id"] = courier_id
+            session.query(Order).filter_by(order_id=i["order_id"]).update(new_order)
+            ids.append(i["order_id"])
+    session.commit()

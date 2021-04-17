@@ -144,7 +144,6 @@ def main():
                                                                                                       "%Y-%m-%dT%H:%M:%S." + str(
                                                                                                           datetime.now().microsecond)[
                                                                                                                              :2] + "Z")})
-
         return redirect('/profile')
 
     @app.route('/exit')
