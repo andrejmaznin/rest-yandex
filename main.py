@@ -2,7 +2,7 @@ from flask import Flask, request
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from data.orders import Order
-from data.orders_resourses import OrdersResource
+from data.orders_resourses import *
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from forms.courier import LoginForm, ChangeForm, SignInForm
@@ -133,17 +133,12 @@ def main():
 
     @app.route('/orders_patch/<int:courier_id>')
     def assign_order(courier_id):
-        print(courier_id)
-        post("https://127.0.0.1:5000/orders/assign", json={"courier_id": courier_id})
+        assign(courier_id)
         return redirect('/profile')
 
-    @app.route('/order_complete/<int:order_id>/<int:courier_id>')
-    def complete_order(order_id, courier_id):
-        post("https://127.0.0.1:5000/orders/complete",
-             json={"courier_id": courier_id, "order_id": order_id, "complete_time": datetime.strftime(datetime.now(),
-                                                                                                      "%Y-%m-%dT%H:%M:%S." + str(
-                                                                                                          datetime.now().microsecond)[
-                                                                                                                             :2] + "Z")})
+    @app.route('/order_complete/<int:order_id>')
+    def complete_order(order_id):
+        complete_order(order_id)
         return redirect('/profile')
 
     @app.route('/exit')

@@ -142,7 +142,7 @@ def assign(courier_id):
 
     weight_courier = session.query(Order).filter_by(courier_id=courier_id).all()
     weight_courier = sum([i.as_dict()["weight"] for i in weight_courier])
-    free_weight = courier_types[courier["courier_type"]] - weight_courier
+    free_weight = courier_types[int(courier["courier_type"])] - weight_courier
 
     courier_times = courier["working_hours"]
     orders = [i.as_dict() for i in
