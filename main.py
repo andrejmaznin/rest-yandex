@@ -103,6 +103,7 @@ def main():
                 global user
                 user = courier[0].as_dict()
                 return redirect('/profile')
+            return render_template('sign_in.html', form=form)
         elif request.method == "GET":
             return render_template('sign_in.html', form=form)
 
@@ -119,6 +120,7 @@ def main():
                 session.add(courier)
                 session.commit()
                 return redirect('/profile')
+            return render_template('sign_up.html', user=user, form=form)
         elif request.method == "GET":
             return render_template('sign_up.html', user=user, form=form)
 
@@ -143,13 +145,6 @@ def main():
     def change_profile():
         if user:
             form = ChangeForm()
-            # Подставление данных авторизованного пользователя в форму
-            form.username.data = user['login']
-            form.region.data = user['regions'][0]
-            print(user["working_hours"])
-            form.start_hour.data, form.finish_hour.data = [int(el.split(':')[0]) for el in
-                                                           user['working_hours'][0].split('-')]
-
             if request.method == "POST":
                 print(1)
                 if form.validate_on_submit():
