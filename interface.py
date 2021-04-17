@@ -76,7 +76,7 @@ def main():
     @app.route('/change_profile', methods=['GET', 'PATCH'])
     def change_profile():
         form = SigninForm()
-        if
+
         if form.validate_on_submit():
             return redirect('/profile')
         return render_template('sign_in.html', user=user, form=form)

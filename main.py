@@ -96,7 +96,12 @@ def main():
         form = MakeOrderForm()
         if request.method == "POST":
             if form.validate_on_submit():
-                # работа с базой
+                session = db_session.create_session()
+                courier = Order(weight=form.weight.data, region=form.region.data,
+                                delivery_hours=[
+                                    f"{form.start_delivery_hour.data}:00-{form.finish_delivery_hour.data}:00"])
+                session.add(courier)
+                session.commit()
                 return redirect('/main')
             return render_template('order.html', user=user, form=form)
         elif request.method == "GET":
