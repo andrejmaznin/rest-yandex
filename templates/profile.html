@@ -16,7 +16,7 @@
         </tr>
         </tbody>
     </table>
-    <button class="btn btn-secondary">Выйти</button>
+    <a class="btn btn-secondary" href="/exit">Выйти</a>
     <a href="/change_profile" class="btn btn-secondary btn-fluid">Редактировать</a>
 </div><br>
 <div>
@@ -37,13 +37,13 @@
                     <td>{{item.weight}}</td>
                     <td>{{regions[item.region]}}</td>
                     <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
-                    <td><button method="post" class="btn btn-info">Закончить заказ</button></td>
+                    <td><a class="btn btn-info" href="/order_complete/{{item.order_id}}">Закончить заказ</a></td>
                  </tr>
             {% endif %}
         {% endfor %}
         </tbody>
     </table>
-    <button class="col-lg-12 btn-warning    ">Назначить новые заказы</button>
+    <a class="col-lg-12 btn-warning" href="/orders_patch/{{user.courier_id}}">Назначить новые заказы</a>
     <br><br>
     <h3>Выполненные заказы</h3>
     <table class="table table-success table-striped">
