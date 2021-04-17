@@ -104,7 +104,7 @@ def main():
                 user = courier[0].as_dict()
                 return redirect('/profile')
         elif request.method == "GET":
-            return render_template('sign_in.html', user=user, form=form)
+            return render_template('sign_in.html', form=form)
 
     @app.route('/sign_up', methods=['GET', 'POST'])
     def sign_up():
@@ -113,7 +113,7 @@ def main():
             if form.validate_on_submit():
                 session = db_session.create_session()
                 courier = Courier(courier_type=form.type.data, regions=[form.region.data],
-                                  working_hours=f"{form.start_hour.data}:00-{form.finish_hour.data}:00",
+                                  working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
                                   hashed_password=set_password(form.password.data), login=form.username.data)
 
                 session.add(courier)
@@ -144,15 +144,22 @@ def main():
         if user:
             form = ChangeForm()
             # Подставление данных авторизованного пользователя в форму
-            form.username.data = user['username']
+            form.username.data = user['login']
             form.region.data = user['regions'][0]
+            print(user["working_hours"])
             form.start_hour.data, form.finish_hour.data = [int(el.split(':')[0]) for el in
                                                            user['working_hours'][0].split('-')]
 
             if request.method == "POST":
                 print(1)
                 if form.validate_on_submit():
-                    # работа с базой
+                    session = db_session.create_session()
+                    print(form.start_hour.data)
+                    session.query(Courier).filter(Courier.courier_id == user["courier_id"]).update({
+                        "courier_type": form.type.data, "regions": [form.region.data],
+                        "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
+                        "hashed_password": set_password(form.password.data), "login": form.username.data})
+                    session.commit()
                     return redirect('/profile')
                 return render_template('change_profile.html', user=user, form=form)
             elif request.method == "GET":
