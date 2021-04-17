@@ -36,6 +36,7 @@ def main():
     api.add_resource(orders_resourses.OrdersListResource, '/orders')  # для списка объектов
     api.add_resource(orders_resourses.OrdersAssignResource, '/orders/assign')  # для списка объектов
     api.add_resource(orders_resourses.OrdersCompleteResource, '/orders/complete')
+    api.add_resource(orders_resourses.OrdersResource, "/order_patch")
 
     @app.route('/')
     @app.route('/main')
