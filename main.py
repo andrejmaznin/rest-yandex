@@ -138,7 +138,7 @@ def main():
 
     @app.route('/order_complete/<int:order_id>')
     def complete_order(order_id):
-        complete_order(order_id)
+        complete(order_id)
         return redirect('/profile')
 
     @app.route('/exit')
