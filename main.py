@@ -1,6 +1,7 @@
 from flask import Flask, request
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
+from data.orders import Order
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from flask_wtf import FlaskForm
@@ -128,8 +129,11 @@ def main():
 
     @app.route('/profile', methods=['GET', 'POST'])
     def profile():
+        session = db_session.create_session()
+
         if user:
-            return render_template('profile.html', user=user, orders=test, regions=REGIONS)
+            orders = session.query(Order).filter(Order.courier_id == user["courier_id"])
+            return render_template('profile.html', user=user, orders=orders, regions=REGIONS)
         return redirect('/sign_in')
 
     @app.route('/order', methods=['GET', 'POST'])
