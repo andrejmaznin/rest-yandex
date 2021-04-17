@@ -4,10 +4,8 @@ from data.couriers import Courier
 from data.orders import Order
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, ValidationError
-from wtforms.validators import DataRequired
-from werkzeug.security import generate_password_hash, check_password_hash
+from forms.courier import LoginForm, ChangeForm, SignInForm
+from forms.order import MakeOrderForm
 import hashlib
 
 
@@ -15,7 +13,7 @@ def set_password(password):
     return str(hashlib.md5(password.encode('utf-8')).hexdigest())
 
 
-types = {1: "foot", 2: "bike", 3: "car"}
+TYPES = {1: "foot", 2: "bike", 3: "car"}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -24,57 +22,11 @@ api = Api(app)
 REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
 
 # тестовые данные
-user = False
+# user = False
 # user = {'username': 'Иван Иванов', 'regions': [1], 'hashed_password': '*как бы хэш*', 'working_hours': ['11:00-13:00']}
 test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00', '14:00-15:00']},
         {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
         {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
-
-
-class CheckWeight(object):
-    def __init__(self):
-        self.message = "Массу заказа необхимо указать числом"
-
-    def __call__(self, form, field):
-        try:
-            weight = float(field.data)
-        except ValueError:
-            raise ValidationError(self.message)
-
-
-class MainForm(FlaskForm):
-    username = StringField('ФИО', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    region = SelectField('Район', choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
-                         coerce=int)
-    type = SelectField('Способ передвижения', choices=[(1, 'Пешком'), (2, 'Велосипед'), (3, 'Автомобиль')], coerce=int)
-    start_hour = SelectField('Начало рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
-    finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
-    submit = SubmitField('Зарегистрироваться')
-
-
-class LoginForm(MainForm):
-    submit = SubmitField('Зарегистрироваться')
-
-
-class ChangeForm(MainForm):
-    submit = SubmitField('Изменить')
-
-
-class SignInForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    submit = SubmitField('Войти')
-
-
-class MakeOrderForm(FlaskForm):
-    weight = StringField('Вес', validators=[DataRequired(), CheckWeight()])
-    region = SelectField('Район доставки    ',
-                         choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
-                         coerce=int)
-    start_delivery_hour = SelectField('Начало', choices=[str(hour) for hour in range(1, 25)], coerce=int)
-    finish_delivery_hour = SelectField('Конец', choices=[str(hour) for hour in range(1, 25)], coerce=int)
-    submit = SubmitField('Сделать заказ')
 
 
 def main():
