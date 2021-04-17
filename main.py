@@ -14,15 +14,15 @@ def set_password(password):
 
 
 TYPES = {1: "foot", 2: "bike", 3: "car"}
+USER_TYPES = {'1': "Пешком", '2': "На велосипеде", '3': "На машине"}
+REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
-REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
-
 # тестовые данные
-# user = False
+user = False
 # user = {'username': 'Иван Иванов', 'regions': [1], 'hashed_password': '*как бы хэш*', 'working_hours': ['11:00-13:00']}
 test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00', '14:00-15:00']},
         {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
@@ -55,6 +55,7 @@ def main():
                                                                                form.password.data)).all():
                 global user
                 user = courier[0].as_dict()
+                print(user)
                 return redirect('/profile')
             return render_template('sign_in.html', form=form)
         elif request.method == "GET":
@@ -71,7 +72,9 @@ def main():
                 courier = Courier(courier_type=form.type.data, regions=[form.region.data],
                                   working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
                                   hashed_password=set_password(form.password.data), login=form.username.data)
-
+                global user
+                user = courier.as_dict()
+                print(user)
                 session.add(courier)
                 session.commit()
                 return redirect('/profile')
@@ -85,7 +88,7 @@ def main():
 
         if user:
             orders = session.query(Order).filter(Order.courier_id == user["courier_id"])
-            return render_template('profile.html', user=user, orders=orders, regions=REGIONS)
+            return render_template('profile.html', user=user, orders=orders, regions=REGIONS, user_types=USER_TYPES)
         return redirect('/sign_in')
 
     @app.route('/order', methods=['GET', 'POST'])
