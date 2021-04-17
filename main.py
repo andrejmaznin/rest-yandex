@@ -2,6 +2,7 @@ from flask import Flask, request
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from data.orders import Order
+from data.orders_resourses import OrdersResource
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from forms.courier import LoginForm, ChangeForm, SignInForm
@@ -73,11 +74,11 @@ def main():
                 courier = Courier(courier_type=form.type.data, regions=[form.region.data],
                                   working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
                                   hashed_password=set_password(form.password.data), login=form.username.data)
-                global user
-                user = courier.as_dict()
-                print(user)
                 session.add(courier)
                 session.commit()
+                courier = session.query(Courier).filter(Courier.login == form.username.data).all()[0]
+                global user
+                user = courier.as_dict()
                 return redirect('/profile')
             return render_template('sign_up.html', user=user, form=form)
         elif request.method == "GET":
@@ -127,6 +128,22 @@ def main():
             elif request.method == "GET":
                 return render_template('change_profile.html', user=user, form=form)
         return redirect('/sign_in')
+
+    @app.route('/orders_patch/<id>')
+    def make_order(id):
+        patch = OrdersResource()
+        orders = patch.patch(id)
+        return redirect('/profile')
+
+    @app.route('/order_complete/<order_id>')
+    def complete_order(order_id):
+        return redirect('/profile')
+
+    @app.route('/exit')
+    def exit():
+        global user
+        user = False
+        return redirect('/main')
 
     app.run()
 
