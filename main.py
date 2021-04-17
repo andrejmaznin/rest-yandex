@@ -7,10 +7,11 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, ValidationError
 from wtforms.validators import DataRequired
 from werkzeug.security import generate_password_hash, check_password_hash
+import hashlib
 
 
 def set_password(password):
-    return generate_password_hash(password)
+    return str(hashlib.md5(password.encode('utf-8')).hexdigest())
 
 
 types = {1: "foot", 2: "bike", 3: "car"}
@@ -88,12 +89,22 @@ def main():
     def main_page():
         return render_template('main.html', orders=test, user=user, regions=REGIONS)
 
-    @app.route('/sign_in')
+    @app.route('/sign_in', methods=['GET', 'POST'])
     def sign_in():
         form = SigninForm()
-        if form.validate_on_submit():
-            return redirect('/profile')
-        return render_template('sign_in.html', user=user, form=form)
+        session = db_session.create_session()
+        if request.method == "POST":
+            courier = session.query(Courier).filter(Courier.login == form.username.data,
+                                                    Courier.hashed_password == set_password(
+                                                        form.password.data)).all()
+            if form.validate_on_submit() and session.query(Courier).filter(Courier.login == form.username.data,
+                                                                           Courier.hashed_password == set_password(
+                                                                               form.password.data)).all():
+                global user
+                user = courier[0].as_dict()
+                return redirect('/profile')
+        elif request.method == "GET":
+            return render_template('sign_in.html', user=user, form=form)
 
     @app.route('/sign_up', methods=['GET', 'POST'])
     def sign_up():
@@ -107,9 +118,7 @@ def main():
 
                 session.add(courier)
                 session.commit()
-                print(form.username.data)
                 return redirect('/profile')
-            return render_template('sign_up.html', user=user, form=form)
         elif request.method == "GET":
             return render_template('sign_up.html', user=user, form=form)
 
