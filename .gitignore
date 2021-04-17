@@ -1,0 +1,11 @@
+
+.idea/workspace.xml
+
+*.xml
+*.iml
+/.idea
+/venv
+
+data/__pycache__
+*.pyc
+*.pyc
