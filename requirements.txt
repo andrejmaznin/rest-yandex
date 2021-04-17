@@ -4,4 +4,3 @@ flask-wtf
 sqlalchemy
 psycopg2
 wtforms
-hashlib
