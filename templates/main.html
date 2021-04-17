@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fliud"><br>
+    <div class="container col-lg-12" style="border: 5px solid grey"><h2>"Сласти от всех напастей" - это сервис по
+        максимально быстрой доставке любых
+        заказов. Наша система распределения заказов между курьерами обеспечивает минимальное время доставки для
+        каждого клиента!</h2></div>
+    <br>
+    <div class="row">
+        <div class="col-md-6 container-fluid" style="color: grey"><h3>На нашем сайте вы можете сделать заказ доставки
+            чего угодно</h3></div>
+        <div class="col-md-6 container-fluid" style="color: grey"><h3>Хотите легко заработать? Просто любите доставлять
+            заказы?<br>У нас найдется для вас работа!</h3></div>
+    </div>
+    <div class="row">
+        <div class="col-md-6"><a href="/order" class="btn btn-info">Сделать заказ</a></div>
+        <div class="col-md-6"><a href="/sign_up" class="btn btn-info">Стать курьером</a></div>
+    </div>
+    <br>
+    <div class="container" style="border: 5px solid grey">
+        <div class="row">
+            <div class="col-md-6"><h4>Районы доставки в Магнитогорске:</h4></div>
+            <div class="col-md-6"><h4>Способы передвижения наших курьеров:</h4></div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <ul>
+                    <li>Левобережный</li>
+                    <li>Правобережный</li>
+                    <li>Орджоникидзовский</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul>
+                    <li>Пешком</li>
+                    <li>На велосипеде</li>
+                    <li>На автомобиле</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
