@@ -21,7 +21,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
-REGIONS = {'1': 'Левобережный район', '2': 'Правобережный', '3': 'Орджоникидзовский'}
+REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
 
 # тестовые данные
 user = False
