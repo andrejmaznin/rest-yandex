@@ -113,23 +113,24 @@ def main():
 
     @app.route('/change_profile', methods=['GET', 'POST'])
     def change_profile():
-        if user:
-            form = ChangeForm()
-            if request.method == "POST":
-                print(1)
-                if form.validate_on_submit():
-                    session = db_session.create_session()
-                    print(form.start_hour.data)
-                    session.query(Courier).filter(Courier.courier_id == user["courier_id"]).update({
-                        "courier_type": form.type.data, "regions": [form.region.data],
-                        "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
-                        "hashed_password": set_password(form.password.data), "login": form.username.data})
-                    session.commit()
-                    return redirect('/profile')
-                return render_template('change_profile.html', user=user, form=form)
-            elif request.method == "GET":
-                return render_template('change_profile.html', user=user, form=form)
-        return redirect('/sign_in')
+        form = ChangeForm()
+        if request.method == "POST":
+            print(1)
+            if form.validate_on_submit():
+                session = db_session.create_session()
+                print(form.start_hour.data)
+                session.query(Courier).filter(Courier.courier_id == user["courier_id"]).update({
+                    "courier_type": form.type.data, "regions": [form.region.data],
+                    "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
+                    "hashed_password": set_password(form.password.data), "login": form.username.data})
+                session.commit()
+                courier = session.query(Courier).filter(Courier.login == form.username.data).all()[0]
+                global user
+                user = courier.as_dict()
+                return redirect('/profile')
+            return render_template('change_profile.html', user=user, form=form)
+        elif request.method == "GET":
+            return render_template('change_profile.html', user=user, form=form)
 
     @app.route('/orders_patch/<int:courier_id>')
     def assign_order(courier_id):
