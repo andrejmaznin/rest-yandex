@@ -124,9 +124,9 @@ def main():
                     "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
                     "hashed_password": set_password(form.password.data), "login": form.username.data})
                 session.commit()
-                courier = session.query(Courier).filter(Courier.login == form.username.data).all()[0]
-                global user
-                user = courier.as_dict()
+                # courier = session.query(Courier).filter(Courier.login == form.username.data).all()[0]
+                # global user
+                # user = courier.as_dict()
                 return redirect('/profile')
             return render_template('change_profile.html', user=user, form=form)
         elif request.method == "GET":
