@@ -4,7 +4,6 @@ from wtforms.validators import DataRequired
 
 
 class MainForm(FlaskForm):
-    username = StringField('ФИО', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     region = SelectField('Район', choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
                          coerce=int)
@@ -15,6 +14,7 @@ class MainForm(FlaskForm):
 
 
 class LoginForm(MainForm):
+    username = StringField('ФИО', validators=[DataRequired()])
     submit = SubmitField('Зарегистрироваться')
 
 

@@ -16,7 +16,7 @@
     <div class="navbar navbar-fixed-top" style="background-color: #303030; color: #e0e0e0">
         <div class="container-fluid">
             <div class="navbar-header"><a href="/main" class="navbar-header" style="color: white">Сласти от всех напастей</a></div>
-            {% if user %}
+            {% if user.is_authenticated %}
             <a class="btn btn-primary" style="color: #ffffff" href="profile">Профиль</a>
             {% else %}
             <div class="btn-group">

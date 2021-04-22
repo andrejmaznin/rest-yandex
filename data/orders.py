@@ -12,7 +12,7 @@ class Order(SqlAlchemyBase):
     region = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     delivery_hours = sqlalchemy.Column(sqlalchemy.ARRAY(sqlalchemy.String), nullable=False)
     courier_id = sqlalchemy.Column(sqlalchemy.Integer,
-                                   sqlalchemy.ForeignKey("couriers.courier_id"))
+                                   sqlalchemy.ForeignKey("couriers.id"))
     courier = orm.relation('Courier')
     completed = sqlalchemy.Column(sqlalchemy.BOOLEAN, nullable=False, default=False)
 

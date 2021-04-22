@@ -25,9 +25,9 @@ class CouriersResource(Resource):
         req = request.get_json()
         print(req)
         session = db_session.create_session()
-        session.query(Courier).filter_by(courier_id=id_c).update(req)
+        session.query(Courier).filter_by(id=id_c).update(req)
         courier = session.query(Courier).get(id_c).as_dict()
-        orders = [i.as_dict() for i in session.query(Order).filter_by(courier_id=id_c).all()]
+        orders = [i.as_dict() for i in session.query(Order).filter_by(id=id_c).all()]
         weight_orders = weight = sum([i["weight"] for i in orders])
         weight_courier = courier_types[courier["courier_type"]]
         for i in orders:
@@ -62,7 +62,7 @@ class CouriersListResource(Resource):
         for i in couriers_list:
             if check_courier(i):
                 courier = Courier(
-                    courier_id=i['courier_id'],
+                    id=i['courier_id'],
                     courier_type=i['courier_type'],
                     regions=i['regions'],
                     working_hours=i['working_hours'])

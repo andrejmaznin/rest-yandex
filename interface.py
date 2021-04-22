@@ -2,7 +2,7 @@ from flask import Flask
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from flask_restful import reqparse, abort, Api, Resource
-from flask import render_template, redirect
+from flask import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired
@@ -11,29 +11,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
-user = True
-
-REGIONS = {'1': 'Левобережный район', '2': 'Правобережный', '3': 'Орджоникидзовский'}
-test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00']},
-        {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
-         {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
+user = False
 
 
 class LoginForm(FlaskForm):
     username = StringField('ФИО', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
-    region = SelectField('Район', choices=[(1, 'Левобережный район'), (2, 'Правобережный'), (3, 'Орджоникидзовский')],
-                         coerce=int)
+    region = StringField('Регион', validators=[DataRequired()])
     type = SelectField('Способ передвижения', choices=[(1, 'Пешком'), (2, 'Велосипед'), (3, 'Автомобиль')], coerce=int)
     start_hour = SelectField('Начало рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     finish_hour = SelectField('Конец рабочих часов', choices=[str(hour) for hour in range(1, 25)], coerce=int)
     submit = SubmitField('Зарегистрироваться')
-
-
-class SigninForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    submit = SubmitField('Войти')
 
 
 def main():
@@ -46,40 +34,33 @@ def main():
 
     @app.route('/')
     @app.route('/main')
-    def main_page():
-        return render_template('main.html', orders=test, user=user, regions=REGIONS)
+    def main():
+        # словарик для теста формы
+        # todo: заменить чем-то нормальным
+        test = {'orders': [{'weight': '234', 'region': 'ural'},
+                           {'weight': '234', 'region': 'ural'},
+                           {'weight': '234', 'region': 'ural'}]}
+
+        return render_template('main.html', orders=test, user=user)
 
     @app.route('/sign_in')
     def sign_in():
-        form = SigninForm()
-        if form.validate_on_submit():
-            return redirect('/profile')
-        return render_template('sign_in.html', user=user, form=form)
+        return render_template('sign_in.html', user=user)
 
-    @app.route('/sign_up', methods=['GET', 'POST'])
+    @app.route('/sign_up')
     def sign_up():
         form = LoginForm()
-        if form.validate_on_submit():
-            return redirect('/profile')
         return render_template('sign_up.html', user=user, form=form)
 
-    @app.route('/profile', methods=['GET', 'POST'])
+    @app.route('/profile')
     def profile():
         if user:
             return render_template('profile.html', user=user)
-        return render_template('sign_in.html', orders=test, user=user, regions=REGIONS)
+        return render_template('sign_in.html')
 
     @app.route('/order')
     def order():
         return render_template('order.html', user=user)
-
-    @app.route('/change_profile', methods=['GET', 'PATCH'])
-    def change_profile():
-        form = SigninForm()
-
-        if form.validate_on_submit():
-            return redirect('/profile')
-        return render_template('sign_in.html', user=user, form=form)
 
     app.run()
 

@@ -2,12 +2,13 @@ import datetime
 import sqlalchemy
 from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
+from flask_login import UserMixin
 
 
-class Courier(SqlAlchemyBase):
+class Courier(SqlAlchemyBase, UserMixin):
     __tablename__ = 'couriers'
 
-    courier_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     courier_type = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     regions = sqlalchemy.Column(sqlalchemy.ARRAY(sqlalchemy.INTEGER))
     working_hours = sqlalchemy.Column(sqlalchemy.ARRAY(sqlalchemy.TEXT))
