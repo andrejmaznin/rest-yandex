@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="login">Регистрация</h1>
+<form class="login_form" action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.login.label }}<br>
+        {{ form.login(class="form-control") }}<br>
+        {% for error in form.login.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    {% if login_message != "" %}
+    <div class="alert alert-danger" role="alert">
+        {{ login_message }}
+    </div>
+    {% endif %}
+    </p>
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(class="form-control", type="password") }}<br>
+        {% for error in form.password.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+    <p>
+        {{ form.check_password.label }}<br>
+        {{ form.check_password(class="form-control", type="password") }}<br>
+        {% for error in form.check_password.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    {% if check_password_message != "" %}
+    <div class="alert alert-danger" role="alert">
+        {{ check_password_message }}
+    </div>
+    {% endif %}
+    </p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+</form>
+<a href="/sign_up" class="btn btn-success">Стать курьером</a>
+{% endblock %}

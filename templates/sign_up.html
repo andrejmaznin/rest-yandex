@@ -12,6 +12,11 @@
         {{ error }}
     </div>
     {% endfor %}
+    {% if login_message != "" %}
+    <div class="alert alert-danger" role="alert">
+        {{ login_message }}
+    </div>
+    {% endif %}
     </p>
     <p>
         {{ form.password.label }}<br>
@@ -56,4 +61,5 @@
     </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 </form>
+<a href="/sign_up/admin" class="btn btn-success">Стать админом</a>
 {% endblock %}

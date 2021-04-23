@@ -2,15 +2,20 @@ from flask import Flask, request
 from data import db_session, couriers_resourses, orders_resourses
 from data.couriers import Courier
 from data.orders import Order
+from data.users import User
+from data.admin import Admin
+from data.payments import Payment
 from data.orders_resourses import *
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from forms.courier import LoginForm, ChangeForm, SignInForm
 from forms.order import MakeOrderForm
+from forms.admin import AdminForm
 import hashlib
 from requests import post, patch
 from datetime import datetime
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from check_uniqe_login import check_uniqe_login
 
 
 def set_password(password):
@@ -20,6 +25,10 @@ def set_password(password):
 TYPES = {1: "foot", 2: "bike", 3: "car"}
 USER_TYPES = {'1': "Пешком", '2': "На велосипеде", '3': "На машине"}
 REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
+ADMIN_PASSWORD = set_password('yandex')
+USER_TYPES = {'courier': Courier, 'admin': Admin}
+
+check_time = ''
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -46,7 +55,14 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(Courier).filter(Courier.id == user_id).first()
+    # print(user_id)
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    # print(user)
+    # user_type = USER_TYPES[user.type]
+    if user is not None:
+        user_type = USER_TYPES[user.type]
+        return db_sess.query(user_type).filter(user_type.id == user.id_from_type_table).first()
+    return user
 
 
 @app.route('/')
@@ -61,9 +77,9 @@ def sign_in():
     if request.method == "POST":
         if form.validate_on_submit():
             session = db_session.create_session()
-            user_check = session.query(Courier).filter(Courier.login == form.username.data).first()
-            if user_check and user_check.hashed_password == set_password(form.password.data):
-                login_user(user_check, remember=True)
+            user = session.query(User).filter(User.login == form.username.data).first()
+            if user and user.hashed_password == set_password(form.password.data):
+                login_user(user)
                 return redirect('/profile')
             return render_template('sign_in.html', user=current_user, message="Неправильный логин или пароль",
                                    form=form)
@@ -78,27 +94,76 @@ def sign_up():
     if request.method == "POST":
         if form.validate_on_submit():
             session = db_session.create_session()
-            if session.query(Courier).filter(Courier.login == form.username.data).all():
-                return redirect('/sign_in')
-            courier = Courier(courier_type=form.type.data, regions=[form.region.data],
-                              working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
-                              hashed_password=set_password(form.password.data), login=form.username.data)
-            session.add(courier)
-            session.commit()
-            courier = session.query(Courier).filter(Courier.login == form.username.data).first()
-            login_user(courier)
-            return redirect('/profile')
-        return render_template('sign_up.html', user=current_user, form=form)
+            login = form.username.data
+            if check_uniqe_login(login):
+                if session.query(Courier).filter(Courier.login == form.username.data).all():
+                    return redirect('/sign_in')
+                courier = Courier(courier_type=form.type.data, regions=[form.region.data],
+                                  working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
+                                  login=form.username.data)
+                session.add(courier)
+                courier = session.query(Courier).filter(Courier.login == form.username.data).first()
+                login_user(courier)
+                user = User(id_from_type_table=courier.id, hashed_password=set_password(form.password.data),
+                            login=login, type='courier')
+                session.add(user)
+                session.commit()
+                login_user(user)
+                return redirect('/profile')
+            return render_template('sign_up.html', user=current_user, form=form, login_message='Этот логин уже занят.')
+        return render_template('sign_up.html', user=current_user, form=form, login_message='')
     elif request.method == "GET":
-        return render_template('sign_up.html', user=current_user, form=form)
+        return render_template('sign_up.html', user=current_user, form=form, login_message='')
+
+
+@app.route('/sign_up/admin', methods=['GET', 'POST'])
+def admin_check():
+    login_message = ''
+    check_password_message = ''
+    form = AdminForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            check_password = set_password(form.check_password.data) == ADMIN_PASSWORD
+            uniqe_login = check_uniqe_login(form.login.data)
+            if check_password and uniqe_login:
+                session = db_session.create_session()
+                admin = Admin(login=form.login.data)
+                session.add(admin)
+                session.commit()
+                admin = session.query(Admin).filter(Admin.login == form.login.data).first()
+                user = User(login=admin.login, id_from_type_table=admin.id, type='admin',
+                            hashed_password=set_password(form.password.data))
+                session.add(user)
+                session.commit()
+                login_user(user)
+                return redirect('/profile')
+            if not check_password:
+                check_password_message = 'Неверный пароль доступа к регистрации.'
+            if not uniqe_login:
+                login_message = 'Этот логин уже занят.'
+        return render_template('admin_sign_up.html', user=current_user, form=form, login_message=login_message,
+                               check_password_message=check_password_message)
+    elif request.method == "GET":
+        return render_template('admin_sign_up.html', user=current_user, form=form, login_message=login_message,
+                               check_password_message=check_password_message)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    session = db_session.create_session()
-    orders = session.query(Order).filter(Order.courier_id == current_user.id)
-    return render_template('profile.html', user=current_user, orders=orders, regions=REGIONS, user_types=USER_TYPES)
+    if current_user._get_current_object().__class__.__name__ == 'Courier':
+        session = db_session.create_session()
+        orders = session.query(Order).filter(Order.courier_id == current_user.id)
+        return render_template('courier_profile.html', user=current_user, orders=orders, regions=REGIONS,
+                               user_types=USER_TYPES)
+    if current_user._get_current_object().__class__.__name__ == 'Admin':
+        return render_template('admin_profile.html', user=current_user,
+                               payments={'couriers': ['Тест0', 'Тест1'], 'orders': {
+                                   'Тест0': [{'order_id': 1, 'sum': 100, 'id': 1},
+                                             {'order_id': 1, 'sum': 100, 'id': 1},
+                                             {'order_id': 1, 'sum': 100, 'id': 1}],
+                                   'Тест1': []}})  # тестовый словарь
+    return render_template('no_access.html', user=current_user)
 
 
 @app.route('/order', methods=['GET', 'POST'])
@@ -131,7 +196,6 @@ def change_profile():
                 "hashed_password": set_password(form.password.data)})
             session.commit()
             return redirect('/profile')
-        print('qqqqqq')
         return render_template('change_profile.html', user=current_user, form=form)
     elif request.method == "GET":
         return render_template('change_profile.html', user=current_user, form=form)
@@ -159,4 +223,4 @@ def exit():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=8080, host='192.168.1.168')
