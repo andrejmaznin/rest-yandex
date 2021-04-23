@@ -183,7 +183,7 @@ def change_profile():
                 session.query(Courier).filter(Courier.id == current_user.id).update({
                     "courier_type": form.type.data, "regions": [form.region.data],
                     "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"]})
-                session.query(User).filter(User.id_from_type_table == current_user.id, User.type=='courier').update(
+                session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
                     {"hashed_password": set_password(form.password.data)})
                 session.commit()
                 return redirect('/profile')
@@ -228,4 +228,4 @@ def exit():
 
 
 if __name__ == '__main__':
-    app.run(port=8080, host='192.168.1.168')
+    app.run()
