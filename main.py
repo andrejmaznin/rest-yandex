@@ -6,6 +6,7 @@ from data.users import User
 from data.admin import Admin
 from data.payments import Payment
 from data.orders_resourses import *
+from data.payments_resourses import *
 from flask_restful import reqparse, abort, Api, Resource
 from flask import render_template, redirect
 from forms.courier import LoginForm, ChangeForm, SignInForm
@@ -26,19 +27,11 @@ TYPES = {1: "foot", 2: "bike", 3: "car"}
 USER_TYPES = {'1': "Пешком", '2': "На велосипеде", '3': "На машине"}
 REGIONS = {1: 'Левобережный район', 2: 'Правобережный', 3: 'Орджоникидзовский'}
 ADMIN_PASSWORD = set_password('yandex')
-USER_TYPES = {'courier': Courier, 'admin': Admin}
-
-check_time = ''
+USER_TABLE_TYPES = {'courier': Courier, 'admin': Admin}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
-
-# тестовые данные
-# user = {'username': 'Иван Иванов', 'regions': [1], 'hashed_password': '*как бы хэш*', 'working_hours': ['11:00-13:00']}
-test = [{'weight': '234', 'region': '1', 'completed': False, 'delivery_hours': ['11:00-13:00', '14:00-15:00']},
-        {'weight': '234', 'region': '2', 'completed': True, 'delivery_hours': ['11:00-13:00']},
-        {'weight': '234', 'region': '3', 'completed': True, 'delivery_hours': ['11:00-13:00']}]
 
 db_session.global_init("couriers")
 api.add_resource(couriers_resourses.CouriersListResource, '/couriers')  # для списка объектов
@@ -55,12 +48,9 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    # print(user_id)
     user = db_sess.query(User).filter(User.id == user_id).first()
-    # print(user)
-    # user_type = USER_TYPES[user.type]
     if user is not None:
-        user_type = USER_TYPES[user.type]
+        user_type = USER_TABLE_TYPES[user.type]
         return db_sess.query(user_type).filter(user_type.id == user.id_from_type_table).first()
     return user
 
@@ -68,7 +58,7 @@ def load_user(user_id):
 @app.route('/')
 @app.route('/main')
 def main_page():
-    return render_template('main.html', orders=test, user=current_user, regions=REGIONS)
+    return render_template('main.html', user=current_user)
 
 
 @app.route('/sign_in', methods=['GET', 'POST'])
@@ -157,62 +147,77 @@ def profile():
         return render_template('courier_profile.html', user=current_user, orders=orders, regions=REGIONS,
                                user_types=USER_TYPES)
     if current_user._get_current_object().__class__.__name__ == 'Admin':
-        return render_template('admin_profile.html', user=current_user,
-                               payments={'couriers': ['Тест0', 'Тест1'], 'orders': {
-                                   'Тест0': [{'order_id': 1, 'sum': 100, 'id': 1},
-                                             {'order_id': 1, 'sum': 100, 'id': 1},
-                                             {'order_id': 1, 'sum': 100, 'id': 1}],
-                                   'Тест1': []}})  # тестовый словарь
+        payments = list_of_payments()
+        return render_template('admin_profile.html', user=current_user, payments=payments)
     return render_template('no_access.html', user=current_user)
 
 
 @app.route('/order', methods=['GET', 'POST'])
+@login_required
 def order():
-    form = MakeOrderForm()
-    if request.method == "POST":
-        if form.validate_on_submit():
-            session = db_session.create_session()
-            courier = Order(weight=form.weight.data, region=form.region.data,
-                            delivery_hours=[
-                                f"{form.start_delivery_hour.data}:00-{form.finish_delivery_hour.data}:00"])
-            session.add(courier)
-            session.commit()
-            return redirect('/main')
-        return render_template('order.html', user=current_user, form=form)
-    elif request.method == "GET":
-        return render_template('order.html', user=current_user, form=form)
+    if current_user._get_current_object().__class__.__name__ == 'Admin':
+        form = MakeOrderForm()
+        if request.method == "POST":
+            if form.validate_on_submit():
+                session = db_session.create_session()
+                courier = Order(weight=form.weight.data, region=form.region.data,
+                                delivery_hours=[
+                                    f"{form.start_delivery_hour.data}:00-{form.finish_delivery_hour.data}:00"])
+                session.add(courier)
+                session.commit()
+                return redirect('/main')
+            return render_template('order.html', user=current_user, form=form)
+        elif request.method == "GET":
+            return render_template('order.html', user=current_user, form=form)
+    return render_template('no_access.html', user=current_user)
 
 
 @app.route('/change_profile', methods=['GET', 'POST'])
 @login_required
 def change_profile():
-    form = ChangeForm()
-    if request.method == "POST":
-        if form.validate_on_submit():
-            session = db_session.create_session()
-            session.query(Courier).filter(Courier.id == current_user.id).update({
-                "courier_type": form.type.data, "regions": [form.region.data],
-                "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
-                "hashed_password": set_password(form.password.data)})
-            session.commit()
-            return redirect('/profile')
-        return render_template('change_profile.html', user=current_user, form=form)
-    elif request.method == "GET":
-        return render_template('change_profile.html', user=current_user, form=form)
+    if current_user._get_current_object().__class__.__name__ == 'Courier':
+        form = ChangeForm()
+        if request.method == "POST":
+            if form.validate_on_submit():
+                session = db_session.create_session()
+                session.query(Courier).filter(Courier.id == current_user.id).update({
+                    "courier_type": form.type.data, "regions": [form.region.data],
+                    "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"]})
+                session.query(User).filter(User.id_from_type_table == current_user.id, User.type=='courier').update(
+                    {"hashed_password": set_password(form.password.data)})
+                session.commit()
+                return redirect('/profile')
+            return render_template('change_profile.html', user=current_user, form=form)
+        elif request.method == "GET":
+            return render_template('change_profile.html', user=current_user, form=form)
+    return render_template('no_access.html', user=current_user)
 
 
 @app.route('/orders_patch/<int:courier_id>')
 @login_required
 def assign_order(courier_id):
-    assign(courier_id)
-    return redirect('/profile')
+    if current_user._get_current_object().__class__.__name__ == 'Courier':
+        assign(courier_id)
+        return redirect('/profile')
+    return render_template('no_access.html', user=current_user)
 
 
 @app.route('/order_complete/<int:order_id>')
 @login_required
 def complete_order(order_id):
-    complete(order_id)
-    return redirect('/profile')
+    if current_user._get_current_object().__class__.__name__ == 'Courier':
+        order_complete(order_id)
+        return redirect('/profile')
+    return render_template('no_access.html', user=current_user)
+
+
+@app.route('/pay/<int:payment_id>')
+@login_required
+def complete_payment(payment_id):
+    if current_user._get_current_object().__class__.__name__ == 'Admin':
+        payment_complete(payment_id)
+        return redirect('/profile')
+    return render_template('no_access.html', user=current_user)
 
 
 @app.route('/exit')

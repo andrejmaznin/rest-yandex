@@ -5,6 +5,7 @@ from data.checks import *
 from data import db_session
 from data.orders import Order
 from data.couriers import Courier
+from data.payments import Payment
 import json
 from sqlalchemy import *
 from datetime import datetime
@@ -132,9 +133,15 @@ class OrdersCompleteResource(Resource):
         return response
 
 
-def complete(order_id):
+def order_complete(order_id):
     session = db_session.create_session()
+    order = session.query(Order).filter(Order.order_id == order_id).first()
     session.query(Order).filter_by(order_id=order_id).update({"completed": True, "courier_id": None})
+    session.commit()
+    courier = session.query(Courier).filter(Courier.id == order.courier_id).first()
+    payment_sum = order.weight * (4 - courier.courier_type) * 10
+    payment = Payment(order_id=order.order_id, courier_id=courier.id, sum=payment_sum)
+    session.add(payment)
     session.commit()
 
 

@@ -6,11 +6,12 @@
     <h2>{{user.login}}</h2>
     <a class="btn btn-secondary" href="/exit">Выйти</a>
 </div><br>
+<a class="btn col-lg-12 btn-warning" href="/order">Выдать новый заказ курьерам</a><br><br>
 <div>
     <h3>Оплата работы курьеров</h3>
-    {% for courier in payments['couriers']%}
+    {% for courier in payments%}
     <h4>{{courier}}</h4>
-    {% if payments['orders'][courier] == [] %}
+    {% if payments[courier] == [] %}
     <h3 class="alert alert-primary">У этого курьера нет не оплаченных заказов.</h3>
     {% else %}
     <table class="table table-primary table-hover">
@@ -21,7 +22,7 @@
         <td></td>
         </thead>
         <tbody>
-        {% for item in payments['orders'][courier] %}
+        {% for item in payments[courier] %}
         <tr>
             <td>{{loop.index + 1}}</td>
             <td>{{item.order_id}}</td>
