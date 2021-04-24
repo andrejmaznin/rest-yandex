@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Станица курьера</h1>
+<h1>Страница курьера</h1>
 <div class="'">
     <h2>{{user.login}}</h2>
     <table class="table table-borderless">
@@ -31,6 +31,7 @@
         <td>Вес</td>
         <td>Район доставки</td>
         <td>Возможные часы доставки</td>
+        <td>Контактные данные</td>
         <td></td>
         </thead>
         <tbody>
@@ -41,6 +42,7 @@
             <td>{{item.weight}}</td>
             <td>{{regions[item.region]}}</td>
             <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
+            <td>{{item.contact}}</td>
             <td><a class="btn btn-info" href="/order_complete/{{item.order_id}}">Закончить заказ</a></td>
         </tr>
         {% endif %}
@@ -48,25 +50,5 @@
         </tbody>
     </table>
     <a class="btn col-lg-12 btn-warning" href="/orders_patch/{{user.id}}">Назначить новые заказы</a>
-    <br><br>
-    <h3>Выполненные заказы</h3>
-    <table class="table table-success table-striped">
-        <thead>
-        <td>#</td>
-        <td>Вес</td>
-        <td>Район доставки</td>
-        </thead>
-        <tbody>
-        {% for item in orders %}
-        {% if item.completed == True%}
-        <tr>
-            <td>{{loop.index}}</td>
-            <td>{{item.weight}}</td>
-            <td>{{regions[item.region]}}</td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-        </tbody>
-    </table>
 </div>
 {% endblock %}

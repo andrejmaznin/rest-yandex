@@ -160,7 +160,10 @@ def profile():
                                user_types=USER_TYPES)
     if current_user._get_current_object().__class__.__name__ == 'Admin':
         payments = list_of_payments()
-        return render_template('admin_profile.html', user=current_user, payments=payments)
+        completed_orders = list_of_completed_orders()
+        new_orders = list_of_new_orders()
+        return render_template('admin_profile.html', user=current_user, payments=payments,
+                               completed_orders=completed_orders, new_orders=new_orders, regions=REGIONS)
     return render_template('no_access.html', user=current_user)
 
 
@@ -172,7 +175,7 @@ def order():
         if request.method == "POST":
             if form.validate_on_submit():
                 session = db_session.create_session()
-                courier = Order(weight=form.weight.data, region=form.region.data,
+                courier = Order(weight=form.weight.data, region=form.region.data, contact=form.contact.data,
                                 delivery_hours=[
                                     f"{str(form.start_delivery_hour.data).rjust(2, '0')}:00-{str(form.finish_delivery_hour.data).rjust(2, '0')}:00"])
                 session.add(courier)
@@ -194,7 +197,8 @@ def change_profile():
                 session = db_session.create_session()
                 session.query(Courier).filter(Courier.id == current_user.id).update({
                     "courier_type": form.type.data, "regions": [form.region.data],
-                    "working_hours": [f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
+                    "working_hours": [
+                        f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
                 session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
                     {"hashed_password": set_password(form.password.data)})
                 session.commit()
@@ -240,4 +244,4 @@ def exit():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='192.168.11.228', port=8080)

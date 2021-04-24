@@ -8,6 +8,48 @@
 </div><br>
 <a class="btn col-lg-12 btn-warning" href="/order">Выдать новый заказ курьерам</a><br><br>
 <div>
+    <h3>Не назначенные заказы</h3>
+    <table class="table table-warning table-hover">
+        <thead>
+        <td>#</td>
+        <td>Вес</td>
+        <td>Район доставки</td>
+        <td>Возможные часы доставки</td>
+        <td>Контактные данные</td>
+        </thead>
+        <tbody>
+        {% for item in new_orders %}
+        <tr>
+            <td>{{loop.index}}</td>
+            <td>{{item.weight}}</td>
+            <td>{{regions[item.region]}}</td>
+            <td>{% for el in item.delivery_hours %}{{el}}<br>{% endfor %}</td>
+            <td>{{item.contact}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <h3>Выполненные заказы</h3>
+    <table class="table table-success table-striped">
+        <thead>
+        <td>#</td>
+        <td>Вес</td>
+        <td>Район доставки</td>
+        <td>Контактные данные</td>
+        </thead>
+        <tbody>
+        {% for item in completed_orders %}
+        <tr>
+            <td>{{loop.index}}</td>
+            <td>{{item.weight}}</td>
+            <td>{{regions[item.region]}}</td>
+            <td>{{item.contact}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div>
     <h3>Оплата работы курьеров</h3>
     {% for courier in payments%}
     <h4>{{courier}}</h4>

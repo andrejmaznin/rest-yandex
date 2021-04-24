@@ -23,4 +23,5 @@ class MakeOrderForm(FlaskForm):
                          coerce=int)
     start_delivery_hour = SelectField('Начало', choices=[str(hour) for hour in range(24)], coerce=int)
     finish_delivery_hour = SelectField('Конец', choices=[str(hour) for hour in range(24)], coerce=int)
+    contact = StringField('Контактные данные', validators=[DataRequired()])
     submit = SubmitField('Сделать заказ')

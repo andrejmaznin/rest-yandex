@@ -14,6 +14,7 @@ class Order(SqlAlchemyBase):
     courier_id = sqlalchemy.Column(sqlalchemy.Integer,
                                    sqlalchemy.ForeignKey("couriers.id"))
     courier = orm.relation('Courier')
+    contact = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     completed = sqlalchemy.Column(sqlalchemy.BOOLEAN, nullable=False, default=False)
 
     def as_dict(self):

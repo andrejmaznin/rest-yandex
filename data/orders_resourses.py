@@ -185,3 +185,15 @@ def assign(courier_id):
             session.query(Order).filter_by(order_id=i["order_id"]).update(new_order)
             ids.append(i["order_id"])
     session.commit()
+
+
+def list_of_completed_orders():
+    session = db_session.create_session()
+    orders = session.query(Order).filter(Order.completed == True).all()
+    return orders
+
+
+def list_of_new_orders():
+    session = db_session.create_session()
+    orders = session.query(Order).filter(Order.completed == False, Order.courier_id == None).all()
+    return orders
