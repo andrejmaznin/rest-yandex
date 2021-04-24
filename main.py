@@ -1,22 +1,33 @@
-from flask import Flask, request
-from data import db_session, couriers_resourses, orders_resourses
+# основа приложения
+from flask import Flask, request, render_template, redirect
+from flask_restful import reqparse, abort, Api, Resource
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+
+# работа с базой данных
+from data import db_session
+
+# классы таблиц базы
 from data.couriers import Courier
 from data.orders import Order
 from data.users import User
 from data.admin import Admin
 from data.payments import Payment
+
+# работа с запросами и данными для них
+from data.couriers_resourses import *
 from data.orders_resourses import *
 from data.payments_resourses import *
-from flask_restful import reqparse, abort, Api, Resource
-from flask import render_template, redirect
+from requests import post, patch
+from datetime import datetime
+from check_uniqe_login import check_uniqe_login
+
+# работа с формами
 from forms.courier import LoginForm, ChangeForm, SignInForm
 from forms.order import MakeOrderForm
 from forms.admin import AdminForm
+
+# создание хэшей данных
 import hashlib
-from requests import post, patch
-from datetime import datetime
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from check_uniqe_login import check_uniqe_login
 
 
 def set_password(password):
@@ -34,12 +45,12 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
 db_session.global_init("couriers")
-api.add_resource(couriers_resourses.CouriersListResource, '/couriers')  # для списка объектов
-api.add_resource(couriers_resourses.CouriersResource, '/couriers/<int:id_c>')
-api.add_resource(orders_resourses.OrdersListResource, '/orders')  # для списка объектов
-api.add_resource(orders_resourses.OrdersAssignResource, '/orders/assign')  # для списка объектов
-api.add_resource(orders_resourses.OrdersCompleteResource, '/orders/complete')
-api.add_resource(orders_resourses.OrdersResource, "/order/patch")
+api.add_resource(CouriersListResource, '/couriers')  # для списка объектов
+api.add_resource(CouriersResource, '/couriers/<int:id_c>')
+api.add_resource(OrdersListResource, '/orders')  # для списка объектов
+api.add_resource(OrdersAssignResource, '/orders/assign')  # для списка объектов
+api.add_resource(OrdersCompleteResource, '/orders/complete')
+# api.add_resource(OrdersResource, "/order/patch")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -89,7 +100,8 @@ def sign_up():
                 if session.query(Courier).filter(Courier.login == form.username.data).all():
                     return redirect('/sign_in')
                 courier = Courier(courier_type=form.type.data, regions=[form.region.data],
-                                  working_hours=[f"{form.start_hour.data}:00-{form.finish_hour.data}:00"],
+                                  working_hours=[
+                                      f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"],
                                   login=form.username.data)
                 session.add(courier)
                 courier = session.query(Courier).filter(Courier.login == form.username.data).first()
@@ -162,10 +174,10 @@ def order():
                 session = db_session.create_session()
                 courier = Order(weight=form.weight.data, region=form.region.data,
                                 delivery_hours=[
-                                    f"{form.start_delivery_hour.data}:00-{form.finish_delivery_hour.data}:00"])
+                                    f"{str(form.start_delivery_hour.data).rjust(2, '0')}:00-{str(form.finish_delivery_hour.data).rjust(2, '0')}:00"])
                 session.add(courier)
                 session.commit()
-                return redirect('/main')
+                return redirect('/profile')
             return render_template('order.html', user=current_user, form=form)
         elif request.method == "GET":
             return render_template('order.html', user=current_user, form=form)
@@ -182,7 +194,7 @@ def change_profile():
                 session = db_session.create_session()
                 session.query(Courier).filter(Courier.id == current_user.id).update({
                     "courier_type": form.type.data, "regions": [form.region.data],
-                    "working_hours": [f"{form.start_hour.data}:00-{form.finish_hour.data}:00"]})
+                    "working_hours": [f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
                 session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
                     {"hashed_password": set_password(form.password.data)})
                 session.commit()

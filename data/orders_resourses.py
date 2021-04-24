@@ -23,31 +23,16 @@ def abort_if_order_not_found(order_id):
         abort(400)
 
 
-def abort_if_courier_not_found(order_id):
+def abort_if_courier_not_found(courier_id):
     session = db_session.create_session()
-    orders = session.query(Courier).get(order_id)
+    orders = session.query(Courier).get(courier_id)
     if not orders:
         abort(400)
-
-
-class OrdersResource(Resource):
-    def patch(self, id):
-        abort_if_order_not_found(id)
-        req = request.get_json()
-        print(req)
-        session = db_session.create_session()
-        session.query(Order).filter_by(order_id=id).update(req)
-        response = session.query(Order).get(id).as_dict()
-        session.commit()
-        response = jsonify(response)
-        response.status_code = 200
-        return response
 
 
 class OrdersListResource(Resource):
     def post(self):
         req = request.get_json()
-        print(request.base_url)
         valid_ids = []
         invalid_ids = []
         session = db_session.create_session()
@@ -81,6 +66,17 @@ class OrdersListResource(Resource):
 class OrdersAssignResource(Resource):
     def post(self):
         req = request.get_json()
+        if not check_id(req["courier_id"]):
+            response = {"validation_error": {"couriers": {'courier_id': req["courier_id"]}}}
+            response = jsonify(response)
+            response.status_code = 400
+            return response
+        for el in req.keys():
+            if el != "courier_id":
+                response = {"validation_error": {"couriers": {'wrong_data': el}}}
+                response = jsonify(response)
+                response.status_code = 400
+                return response
 
         session = db_session.create_session()
         courier = session.query(Courier).get(req["courier_id"]).as_dict()
@@ -94,7 +90,6 @@ class OrdersAssignResource(Resource):
                   session.query(Order).filter(and_(Order.courier_id == None, Order.completed == False)).all()]
         orders = list(filter(lambda a: check_regions(courier["regions"], a["region"]) and
                                        check_intersection(courier_times, a["delivery_hours"]), orders))
-        print(orders)
         ids = []
         for i in orders:
             if free_weight >= i["weight"]:
@@ -117,6 +112,23 @@ class OrdersAssignResource(Resource):
 class OrdersCompleteResource(Resource):
     def post(self):
         req = request.get_json()
+        for el in req.keys():
+            if el not in ['courier_id', 'order_id', 'complete_time']:
+                response = {"validation_error": {"couriers": {'wrong_data': el}}}
+                response = jsonify(response)
+                response.status_code = 400
+                return response
+        if not check_id(req['courier_id']):
+            response = {"validation_error": {"couriers": {'courier_id': req['courier_id']}}}
+            response = jsonify(response)
+            response.status_code = 400
+            return response
+        if not check_id(req['order_id']):
+            response = {"validation_error": {"couriers": {'order_id': req['order_id']}}}
+            response = jsonify(response)
+            response.status_code = 400
+            return response
+
         abort_if_courier_not_found(req["courier_id"])
         abort_if_order_not_found(req["order_id"])
         session = db_session.create_session()
@@ -125,6 +137,12 @@ class OrdersCompleteResource(Resource):
             response = jsonify()
             response.status_code = 400
             return response
+        order = session.query(Order).filter(Order.order_id == req["order_id"]).first()
+        courier = session.query(Courier).filter(Courier.id == order.courier_id).first()
+        payment_sum = int(order.weight) * (4 - int(courier.courier_type)) * 10
+        payment = Payment(order_id=order.order_id, courier_id=courier.id, sum=payment_sum)
+        session.add(payment)
+        session.commit()
         session.query(Order).filter_by(order_id=req["order_id"]).update({"completed": True, "courier_id": None})
         response = {"order_id": req["order_id"]}
         response = jsonify(response)
@@ -136,12 +154,12 @@ class OrdersCompleteResource(Resource):
 def order_complete(order_id):
     session = db_session.create_session()
     order = session.query(Order).filter(Order.order_id == order_id).first()
-    session.query(Order).filter_by(order_id=order_id).update({"completed": True, "courier_id": None})
-    session.commit()
     courier = session.query(Courier).filter(Courier.id == order.courier_id).first()
-    payment_sum = order.weight * (4 - courier.courier_type) * 10
+    payment_sum = int(order.weight) * (4 - int(courier.courier_type)) * 10
     payment = Payment(order_id=order.order_id, courier_id=courier.id, sum=payment_sum)
     session.add(payment)
+    session.commit()
+    session.query(Order).filter_by(order_id=order_id).update({"completed": True, "courier_id": None})
     session.commit()
 
 
@@ -158,7 +176,6 @@ def assign(courier_id):
               session.query(Order).filter(and_(Order.courier_id == None, Order.completed == False)).all()]
     orders = list(filter(lambda a: check_regions(courier["regions"], a["region"]) and
                                    check_intersection(courier_times, a["delivery_hours"]), orders))
-    print(orders)
     ids = []
     for i in orders:
         if free_weight >= i["weight"]:

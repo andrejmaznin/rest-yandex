@@ -17,3 +17,4 @@ def list_of_payments():  # возвращает словарь курьеров 
 def payment_complete(payment_id):
     session = db_session.create_session()
     session.query(Payment).filter_by(id=payment_id).update({"completed": True})
+    session.commit()
