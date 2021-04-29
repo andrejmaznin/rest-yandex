@@ -98,5 +98,3 @@ def check_order_region(region):
         return False
     return True
 
-
-print(check_hours('11:00-12:00'))

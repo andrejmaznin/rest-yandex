@@ -19,7 +19,7 @@ from data.orders_resourses import *
 from data.payments_resourses import *
 from requests import post, patch
 from datetime import datetime
-from form_checks import *
+from data.form_checks import *
 
 # работа с формами
 from forms.courier import LoginForm, ChangeForm, SignInForm
