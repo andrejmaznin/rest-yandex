@@ -29,6 +29,9 @@ from forms.admin import AdminForm
 # создание хэшей данных
 import hashlib
 
+# сервер
+from waitress import serve
+
 
 def set_password(password):
     return str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -206,11 +209,13 @@ def change_profile():
                         "courier_type": form.type.data, "regions": [form.region.data],
                         "working_hours": [
                             f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
-                    session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
+                    session.query(User).filter(User.id_from_type_table == current_user.id,
+                                               User.type == 'courier').update(
                         {"hashed_password": set_password(form.password.data)})
                     session.commit()
                     return redirect('/profile')
-                return render_template('change_profile.html', user=current_user, form=form, time_message='Такое время недопустимо.')
+                return render_template('change_profile.html', user=current_user, form=form,
+                                       time_message='Такое время недопустимо.')
             return render_template('change_profile.html', user=current_user, form=form, time_message='')
         elif request.method == "GET":
             return render_template('change_profile.html', user=current_user, form=form, time_message='')
@@ -252,4 +257,5 @@ def exit():
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.1.168', port=8080)
+    # app.run(host='192.168.1.168', port=8080)
+    serve(app, host='127.0.0.1', port=5000)
