@@ -7,3 +7,9 @@ def check_uniqe_login(login):
     if session.query(User).filter(User.login == login).first():
         return False
     return True
+
+
+def check_times(time1, time2):
+    if time1 >= time2:
+        return False
+    return True

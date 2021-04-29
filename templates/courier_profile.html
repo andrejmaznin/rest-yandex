@@ -50,5 +50,24 @@
         </tbody>
     </table>
     <a class="btn col-lg-12 btn-warning" href="/orders_patch/{{user.id}}">Назначить новые заказы</a>
+    <br><br>
+    <h3>Выплаты, полученные за выполненные заказы</h3>
+    <h4>Общая сумма: {{salary}}</h4>
+    <table class="table table-success">
+        <thead>
+            <td>#</td>
+            <td>id заказа</td>
+            <td>Сумма</td>
+        </thead>
+        <tbody>
+        {% for el in payments %}
+            <tr>
+                <td>{{loop.index}}</td>
+                <td>{{el.order_id}}</td>
+                <td>{{el.sum}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

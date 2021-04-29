@@ -7,5 +7,5 @@ payload = {
 
 }
 head = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-print(patch('http://127.0.0.1:5000/couriers/1', headers=head,
+print(patch('http://192.168.1.168:8080/couriers/1', headers=head,
             json=payload, verify=False).json())

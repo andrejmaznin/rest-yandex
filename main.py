@@ -19,7 +19,7 @@ from data.orders_resourses import *
 from data.payments_resourses import *
 from requests import post, patch
 from datetime import datetime
-from check_uniqe_login import check_uniqe_login
+from form_checks import *
 
 # работа с формами
 from forms.courier import LoginForm, ChangeForm, SignInForm
@@ -97,25 +97,27 @@ def sign_up():
             session = db_session.create_session()
             login = form.username.data
             if check_uniqe_login(login):
-                if session.query(Courier).filter(Courier.login == form.username.data).all():
-                    return redirect('/sign_in')
-                courier = Courier(courier_type=form.type.data, regions=[form.region.data],
-                                  working_hours=[
-                                      f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"],
-                                  login=form.username.data)
-                session.add(courier)
-                courier = session.query(Courier).filter(Courier.login == form.username.data).first()
-                login_user(courier)
-                user = User(id_from_type_table=courier.id, hashed_password=set_password(form.password.data),
-                            login=login, type='courier')
-                session.add(user)
-                session.commit()
-                login_user(user)
-                return redirect('/profile')
-            return render_template('sign_up.html', user=current_user, form=form, login_message='Этот логин уже занят.')
-        return render_template('sign_up.html', user=current_user, form=form, login_message='')
+                if check_times(int(form.start_hour.data), int(form.finish_hour.data)):
+                    courier = Courier(courier_type=form.type.data, regions=[form.region.data],
+                                      working_hours=[
+                                          f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"],
+                                      login=form.username.data)
+                    session.add(courier)
+                    courier = session.query(Courier).filter(Courier.login == form.username.data).first()
+                    login_user(courier)
+                    user = User(id_from_type_table=courier.id, hashed_password=set_password(form.password.data),
+                                login=login, type='courier')
+                    session.add(user)
+                    session.commit()
+                    login_user(user)
+                    return redirect('/profile')
+                return render_template('sign_up.html', user=current_user, form=form, login_message='',
+                                       time_message="Такое время недопустимо.")
+            return render_template('sign_up.html', user=current_user, form=form, login_message='Этот логин уже занят.',
+                                   time_message='')
+        return render_template('sign_up.html', user=current_user, form=form, login_message='', time_message='')
     elif request.method == "GET":
-        return render_template('sign_up.html', user=current_user, form=form, login_message='')
+        return render_template('sign_up.html', user=current_user, form=form, login_message='', time_message='')
 
 
 @app.route('/sign_up/admin', methods=['GET', 'POST'])
@@ -156,8 +158,9 @@ def profile():
     if current_user._get_current_object().__class__.__name__ == 'Courier':
         session = db_session.create_session()
         orders = session.query(Order).filter(Order.courier_id == current_user.id)
+        payments, salary = list_of_completed_payments(current_user.id)
         return render_template('courier_profile.html', user=current_user, orders=orders, regions=REGIONS,
-                               user_types=USER_TYPES)
+                               user_types=USER_TYPES, payments=payments, salary=salary)
     if current_user._get_current_object().__class__.__name__ == 'Admin':
         payments = list_of_payments()
         completed_orders = list_of_completed_orders()
@@ -174,16 +177,19 @@ def order():
         form = MakeOrderForm()
         if request.method == "POST":
             if form.validate_on_submit():
-                session = db_session.create_session()
-                courier = Order(weight=form.weight.data, region=form.region.data, contact=form.contact.data,
-                                delivery_hours=[
-                                    f"{str(form.start_delivery_hour.data).rjust(2, '0')}:00-{str(form.finish_delivery_hour.data).rjust(2, '0')}:00"])
-                session.add(courier)
-                session.commit()
-                return redirect('/profile')
-            return render_template('order.html', user=current_user, form=form)
+                if check_times(int(form.start_delivery_hour.data), int(form.finish_delivery_hour.data)):
+                    session = db_session.create_session()
+                    courier = Order(weight=form.weight.data, region=form.region.data, contact=form.contact.data,
+                                    delivery_hours=[
+                                        f"{str(form.start_delivery_hour.data).rjust(2, '0')}:00-{str(form.finish_delivery_hour.data).rjust(2, '0')}:00"])
+                    session.add(courier)
+                    session.commit()
+                    return redirect('/profile')
+                return render_template('order.html', user=current_user, form=form,
+                                       time_message='Такое время недопустимо.')
+            return render_template('order.html', user=current_user, form=form, time_message='')
         elif request.method == "GET":
-            return render_template('order.html', user=current_user, form=form)
+            return render_template('order.html', user=current_user, form=form, time_message='')
     return render_template('no_access.html', user=current_user)
 
 
@@ -194,18 +200,20 @@ def change_profile():
         form = ChangeForm()
         if request.method == "POST":
             if form.validate_on_submit():
-                session = db_session.create_session()
-                session.query(Courier).filter(Courier.id == current_user.id).update({
-                    "courier_type": form.type.data, "regions": [form.region.data],
-                    "working_hours": [
-                        f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
-                session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
-                    {"hashed_password": set_password(form.password.data)})
-                session.commit()
-                return redirect('/profile')
-            return render_template('change_profile.html', user=current_user, form=form)
+                if check_times(int(form.start_hour.data), int(form.finish_hour.data)):
+                    session = db_session.create_session()
+                    session.query(Courier).filter(Courier.id == current_user.id).update({
+                        "courier_type": form.type.data, "regions": [form.region.data],
+                        "working_hours": [
+                            f"{str(form.start_hour.data).rjust(2, '0')}:00-{str(form.finish_hour.data).rjust(2, '0')}:00"]})
+                    session.query(User).filter(User.id_from_type_table == current_user.id, User.type == 'courier').update(
+                        {"hashed_password": set_password(form.password.data)})
+                    session.commit()
+                    return redirect('/profile')
+                return render_template('change_profile.html', user=current_user, form=form, time_message='Такое время недопустимо.')
+            return render_template('change_profile.html', user=current_user, form=form, time_message='')
         elif request.method == "GET":
-            return render_template('change_profile.html', user=current_user, form=form)
+            return render_template('change_profile.html', user=current_user, form=form, time_message='')
     return render_template('no_access.html', user=current_user)
 
 
@@ -244,4 +252,4 @@ def exit():
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.11.228', port=8080)
+    app.run(host='192.168.1.168', port=8080)
